@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import List, Tuple, Set
-from dataclasses import dataclass
 from enum import Enum
 import gym
 import numpy as np
@@ -10,49 +9,9 @@ from functools import partial
 from src import utils
 from src.spaces import EnumSpace
 
-# other ideas: add a bomb tile or something like that which will blow other
-# tiles up.
-
-
 Action = Enum("Action", "UP DOWN LEFT RIGHT")
 
 NO_TILE_VALUE = 0
-
-
-@dataclass
-class Tile:
-    """Dataclass to generate different tiles
-
-    Args:
-        value: the value numerical value of the tile
-    """
-
-    modes: ["terminal", "rgb_array"]  # allowed `render` modes
-    value: int
-
-    @staticmethod
-    def get_color_code(value):
-        """Get a hex representation of the given tile"""
-        return {
-            0: "#DDDDDD",  # some white color
-            2: "#FAE7E0",
-            4: "#F5E5CE",
-            8: "#FEB17D",
-            16: "#EB8E53",
-            32: "#F87A63",
-            64: "#E95839",
-            128: "#F3D96B",
-            256: "#F1D04B",
-            512: "#E4C02A",
-            1024: "#ECC400",
-            2048: "#F46575",
-            4096: "#F34B5C",
-        }[value]
-
-    @staticmethod
-    def as_rgb(value):
-        h = Tile.get_color_code(value)
-        return int(h[1:3], 16), int(h[3:5], 16), int(h[5:7], 16)
 
 
 class Board:
@@ -72,7 +31,7 @@ class Board:
         self.n_rows = n_rows
         self.n_cols = n_cols
         self.score: int = 0
-        self.values = np.full((self.n_rows, self.n_cols), NO_TILE_VALUE, np.int32)
+        self.values = np.full((self.n_rows, self.n_cols), NO_TILE_VALUE, np.int31)
 
     def __eq__(self, other):
         if not other.n_rows == self.n_rows and other.n_cols == self.n_cols:
@@ -107,19 +66,18 @@ class Board:
         return {"obs": transformed_obs, "valid_action_mask": valid_action_mask}
 
     def render(self, mode="terminal"):
+        th, tw = 50, 50  # tile height and tile width, respectively
         assert mode in self.modes, "Mode not supported."
         if mode == "terminal":
             print(self.values)
             return None
         elif mode == "rgb_array":
             """RGB representation, except enhanced `N` times"""
-            N = 50
-            arr = np.empty((self.n_rows * N, self.n_cols * N, 3), dtype=np.uint8)
+            arr = np.empty((self.n_rows * th, self.n_cols * tw, 3), dtype=np.uint8)
             for i in range(self.n_rows):
                 for j in range(self.n_cols):
-                    rgb_val = Tile.as_rgb(self.values[i, j])
-                    x = np.tile(np.reshape(rgb_val, (1, 1, 3)), (N, N, 1))
-                    arr[N * i : N * (i + 1), N * j : N * (j + 1)] = x
+                    img = utils.Tile.tile_representation(self.values[i, j], th, tw)
+                    arr[th * i : th * (i + 1), tw * j : tw * (j + 1)] = img
             return arr
         else:
             raise NotImplementedError
