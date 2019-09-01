@@ -31,9 +31,7 @@ class TestSwiping:
             actual = Board.apply_action_on_board(B0, a)
             expected = board_from_string(s)
 
-            err_msg = (
-                f"Action {a}: Got {actual.display()}, expected {expected.display()}"
-            )
+            err_msg = f"Action {a}: Got {actual.render()}, expected {expected.render()}"
             assert actual == expected, err_msg
 
     def test_simple_swiping_2x2(self):
@@ -104,3 +102,28 @@ def test_spawning_random_boards():
 
     board2 = Board.init_random((5, 5), 0)
     assert np.argwhere(board2.as_array()).shape == (0, 2)
+
+
+def test_available_actions_work_as_expected():
+    s = """1 2 3
+           1 4 5
+           6 7 8"""
+    board = board_from_string(s)
+    available_actions = Board.get_available_actions(board)
+    assert available_actions == set([Action.DOWN, Action.UP])
+
+    s = """ 1  2  3  4
+            5  6  7  8
+            9 10 11 12
+           13 14 15 16"""
+    board = board_from_string(s)
+    available_actions = Board.get_available_actions(board)
+    assert available_actions == set([])
+
+    s = """ 1  2  2  4
+            5  2  7  8
+            9 10 11 12
+           13 14 15 16"""
+    board = board_from_string(s)
+    available_actions = Board.get_available_actions(board)
+    assert available_actions == set([Action.LEFT, Action.RIGHT, Action.UP, Action.DOWN])

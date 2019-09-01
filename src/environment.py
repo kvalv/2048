@@ -12,7 +12,6 @@ class Game2048(gym.Env):
     t: int = 0
 
     action_space = gym.spaces.Discrete(4)
-    observation_space = gym.spaces.Box
 
     def __init__(self, env_config: dict):
         """
@@ -22,8 +21,16 @@ class Game2048(gym.Env):
 
         """
         self.env_config = env_config
-        self.observation_space = gym.spaces.Box(
-            0, 2 ** 16, shape=env_config["board_shape"], dtype=np.int32
+        # self.observation_space = gym.spaces.Box(
+        #     0, 2 ** 16, shape=env_config["board_shape"], dtype=np.int32
+        # )
+        self.observation_space = gym.spaces.Dict(
+            {
+                "obs": gym.spaces.Box(0, high=16, shape=(4, 4), dtype=np.float32),
+                "valid_action_mask": gym.spaces.Box(
+                    0.0, 1.0, shape=(4,), dtype=np.float32
+                ),
+            }
         )
         self.reset()
 
@@ -56,9 +63,6 @@ class Game2048(gym.Env):
         if Board.is_game_over(modified_board):
             done = True
             reward = 0
-            # if np.random.rand() > 0.975:
-            #     print(f"Score: {modified_board.score}")
-            #     modified_board.display()
         else:
 
             # An action is invalid if it doesn't change the board.
@@ -78,4 +82,4 @@ class Game2048(gym.Env):
             reward = np.log(1 + diff) + penalty
 
         self.board = modified_board
-        return modified_board.as_observation(), reward, done, info
+        return self.board.as_observation(), reward, done, info

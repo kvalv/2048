@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import List, Tuple, Set
 from dataclasses import dataclass
 from enum import Enum
 import gym
@@ -98,10 +98,15 @@ class Board:
         return self.values
 
     def as_observation(self):
-        """log2 representation of the same environment (with + 1 to avoid nan's)"""
-        return np.log(self.values + 1) / np.log(2)
+        transformed_obs = np.log(self.values + 1) / np.log(2)
+        valid_action_mask = np.zeros(4)
+        for action in Board.get_available_actions(self):
+            index = action.value - 1  # enums are 1-indexed, so we subtract by 1.
+            valid_action_mask[index] = 1.0
 
-    def render(self, mode):
+        return {"obs": transformed_obs, "valid_action_mask": valid_action_mask}
+
+    def render(self, mode="terminal"):
         assert mode in self.modes, "Mode not supported."
         if mode == "terminal":
             print(self.values)
@@ -118,6 +123,13 @@ class Board:
             return arr
         else:
             raise NotImplementedError
+
+    @staticmethod
+    def get_available_actions(board: Board) -> Set[Action]:
+        all_actions = [Action.UP, Action.DOWN, Action.LEFT, Action.RIGHT]
+        return set(
+            a for a in all_actions if Board.apply_action_on_board(board, a) != board
+        )
 
     @staticmethod
     def apply_action_on_board(board: Board, action: Action) -> Board:
@@ -175,12 +187,7 @@ class Board:
         if (board.as_array() == NO_TILE_VALUE).any():
             return False
 
-        # It is game over if we try to move in _any_ direction and we fail, i.e. the board
-        # is left unhanged.
-        return all(
-            np.all(board == Board.apply_action_on_board(board, action))
-            for action in [Action.UP, Action.DOWN, Action.LEFT, Action.RIGHT]
-        )
+        return len(Board.get_available_actions(board)) == 0
 
     @staticmethod
     def process_row(row: np.ndarray,) -> Tuple(np.ndarray, int):
