@@ -31,7 +31,7 @@ class Board:
         self.n_rows = n_rows
         self.n_cols = n_cols
         self.score: int = 0
-        self.values = np.full((self.n_rows, self.n_cols), NO_TILE_VALUE, np.int31)
+        self.values = np.full((self.n_rows, self.n_cols), NO_TILE_VALUE, np.int32)
 
     def __eq__(self, other):
         if not other.n_rows == self.n_rows and other.n_cols == self.n_cols:

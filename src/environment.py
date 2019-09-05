@@ -80,6 +80,7 @@ class Game2048(gym.Env):
             diff = modified_board.score - self.board.score
 
             reward = np.log(1 + diff) + penalty
+            reward = np.clip(reward, -11, 10)  # TODO: move to a wrapper.
 
         self.board = modified_board
         return self.board.as_observation(), reward, done, info

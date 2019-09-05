@@ -19,12 +19,12 @@ class Agent(TFModelV2):
         self.inputs = layers.Input(shape=(4, 4), name="inputs")
 
         x = layers.Flatten()(self.inputs)
-        x = layers.Dense(256, activation="relu")(x)
-        x = layers.Dense(256, activation="relu")(x)
-        x = layers.Dense(256, activation="relu")(x)
-        x = layers.Dense(256, activation="relu")(x)
+        x = layers.Dense(512, activation="relu")(x)
+        x = layers.Dense(512, activation="relu")(x)
+        x = layers.Dense(512, activation="relu")(x)
         self.logits = layers.Dense(self.num_outputs, activation=None)(x)
 
+        x = layers.Dense(64)(x)
         self.value_out = layers.Dense(1)(x)
 
         self.base_model = tf.keras.Model(self.inputs, [self.logits, self.value_out])
