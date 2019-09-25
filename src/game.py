@@ -56,15 +56,6 @@ class Board:
     def as_array(self):
         return self.values
 
-    def as_observation(self):
-        transformed_obs = np.log(self.values + 1) / np.log(2)
-        valid_action_mask = np.zeros(4)
-        for action in Board.get_available_actions(self):
-            index = action.value - 1  # enums are 1-indexed, so we subtract by 1.
-            valid_action_mask[index] = 1.0
-
-        return {"obs": transformed_obs, "valid_action_mask": valid_action_mask}
-
     def render(self, mode="terminal"):
         th, tw = 50, 50  # tile height and tile width, respectively
         assert mode in self.modes, "Mode not supported."

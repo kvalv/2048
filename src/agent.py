@@ -15,25 +15,53 @@ class Agent(TFModelV2):
             obs_space, action_space, num_outputs, model_config, name
         )
 
-        # TODO: find better way?
-        self.inputs = layers.Input(shape=(4, 4), name="inputs")
+        K.set_image_data_format("channels_last")  # workers probably have channels_first
+        if K.image_data_format() == "channels_last":
+            n_rows, n_columns, n_channels = obs_space.original_space["board"].shape
+            self.inputs = layers.Input(
+                shape=(n_rows, n_columns, n_channels), name="inputs"
+            )
+        else:
+            n_channels, n_rows, n_columns = obs_space.original_space["board"].shape
+            self.inputs = layers.Input(
+                shape=(n_channels, n_rows, n_columns), name="inputs"
+            )
 
-        x = layers.Flatten()(self.inputs)
-        x = layers.Dense(512, activation="relu")(x)
-        x = layers.Dense(512, activation="relu")(x)
-        x = layers.Dense(512, activation="relu")(x)
+        x = KL.Conv2D(32, kernel_size=(1, 1), strides=(1, 1), padding="same")(
+            self.inputs
+        )
+        x = KL.Conv2D(32, kernel_size=(2, 2), strides=(2, 2), padding="same")(x)
+        x = KL.Flatten()(x)
+        x = KL.Dense(64)(x)
+        # x = layers.Conv2D(32, kernel_size=(1, 1), strides=(1, 1), padding="same")(
+        #     self.inputs
+        # )
+        # x = layers.Conv2D(64, kernel_size=(2, 2), strides=(1, 1), padding="same")(x)
+        # x = layers.Flatten()(x)
+        # x = layers.Dense(64)(x)
+        # self.logits = layers.Dense(self.num_outputs, activation=None)(x)
+
+        # x = layers.Dense(64)(x)
+        # self.value_out = layers.Dense(1)(x)
+        # __import__("pdb").set_trace()
+
+        # x = layers.Flatten()(self.inputs)
+        # x = layers.Dense(512, activation="relu")(x)
+        # x = layers.Dense(512, activation="relu")(x)
+        # x = layers.Dense(512, activation="relu")(x)
         self.logits = layers.Dense(self.num_outputs, activation=None)(x)
 
         x = layers.Dense(64)(x)
         self.value_out = layers.Dense(1)(x)
 
         self.base_model = tf.keras.Model(self.inputs, [self.logits, self.value_out])
+        self.base_model.summary()
         self.register_variables(self.base_model.variables)
 
         self.obs_space = obs_space
 
     def forward(self, input_dict, state, seq_lens):
-        intent_vector, self._value_out = self.base_model(input_dict["obs"]["obs"])
+        intent_vector, self._value_out = self.base_model(input_dict["obs"]["board"])
         action_logits = intent_vector * input_dict["obs"]["valid_action_mask"]
 
         return action_logits, state
